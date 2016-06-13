@@ -4,7 +4,7 @@
 /*
 Authors: Adhitya, Nimish, Chhavi
 */
-var cnt = 8;
+var cnt = 1;
 function scicos_block() {
     var options = arguments[0] || new Object();
     var block_type = ["Block", "graphics", "model", "gui", "doc"];
@@ -91,7 +91,7 @@ function scicos_graphics() {
     this.graphics = new ScilabString(graphics_type);
     this.orig = options.orig || new ScilabDouble([0, 0]);
     this.sz = options.sz || new ScilabDouble([80, 80]); // Space and comma works the same!
-    this.flip = options.flip || new ScilabBoolean([true]);
+    this.flip = options.flip || new ScilabBoolean([false]);
     this.theta = options.theta || new ScilabDouble([0]);
     this.exprs = options.exprs || new ScilabDouble();
     this.pin = options.pin || new ScilabDouble();
@@ -329,20 +329,9 @@ function CONST_m() {
             var exprs = new ScilabString([sci2exp(this.c)]);
             this.x= new standard_define(new ScilabDouble([80, 80]), model, exprs, gr_i); // 1 -> 80
             this.x.graphics.style = new ScilabString(["CONST_m"]);
-            var attributes = {
-                style: "CONST_m",
-                simulationFunctionName: "cstblk4",
-                simulationFunctionType: "C_OR_FORTRAN",
-                blockType: "d",
-                interfaceFunctionName: "CONST_m",
-				blockName: "CONST_m",
-				blockElementName: "CONST_m",
-        		realParameters : this.x.model.rpar,
-        		integerParameters : this.x.model.ipar,
-        		exprs : this.x.graphics.exprs
-            };
-            return new BasicBlock(attributes);
-       
+            return new BasicBlock(this.x);
+       case "details":
+            return this.x;
             
     }
 }
@@ -353,7 +342,7 @@ function ANDLOG_f() {
     model.sim = new ScilabString(["andlog"]);
     model.out = new ScilabDouble([1]);
     model.out2 = new ScilabDouble([1]); // null -> 1
-    model.evtin = new ScilabDouble([-1],[-1]) // 1, 1 -> -1, -1
+    model.evtin = new ScilabDouble([-1],[-1]); // 1, 1 -> -1, -1
     model.blocktype = new ScilabString(["d"]);
     model.firing = new ScilabDouble();
     model.dep_ut = new ScilabBoolean([false, false]);
@@ -506,7 +495,7 @@ function ANDBLK() {
         		integerParameters : this.x.model.ipar,
         		exprs : this.x.graphics.exprs
             };
-            return new BasicBlock(attributes);
+            return new BasicBlock(this.x);
         
         case "details":
             return this.x;
@@ -559,7 +548,7 @@ function CFSCOPE() {
         		integerParameters : this.x.model.ipar,
         		exprs : this.x.graphics.exprs
             };
-            return new BasicBlock(attributes);
+            return new BasicBlock(this.x);
     }
 }
 
@@ -649,7 +638,7 @@ function CLOCK_c() {
 		integerParameters : this.x.model.ipar,
 		exprs : this.x.graphics.exprs
     };
-    return new BasicBlock(attributes);
+    return new BasicBlock(this.x);
 }
 
 function EVTDLY_c() {
@@ -760,32 +749,91 @@ function IFTHEL_f() {
 
 
 function BasicBlock() {
-    var options = arguments[0] || new Object();
-    this.angle = options.angle || "";
-    this.blockType = options.blockType || "";
-    this.connectable = options.connectable || "";
-    this.dependsOnT = options.dependsOnT || "";
-    this.dependsOnU = options.dependsOnU || "";
-    this.id = options.id || "";
-    this.interfaceFunctionName = options.interfaceFunctionName || "";
-    this.ordering = options.ordering || "";
-    this.parent = options.parent || "";
-    this.simulationFunctionName = options.simulationFunctionName || "";
-    this.simulationFunctionType = options.simulationFunctionType || "";
-    this.style = options.style || "";
-    this.value = options.value || "";
-    this.vertex = options.vertex || "";
-    this.visible = options.visible || "";
-    this.exprs = options.exprs || "";
-    this.realParameters = options.realParameters || "";
-    this.integerParameters = options.integerParameters || new ScilabDouble();
-    this.objectsParameters = list();
-    this.nbZerosCrossing = new ScilabDouble([0]);
-    this.nmode = new ScilabDouble([0]);
-    this.oDState = list();
-    this.equations = list();
-	this.blockName = options.blockName || "";
-    this.blockElementName = options.blockElementName || "";
+    if(arguments.length > 0)
+    {
+        var options = arguments[0];
+        this.angle = options.angle;
+        this.blockType = options.model.blocktype.data00.value;
+        this.connectable = options.connectable;
+        if(options.model.dep_ut.data01.value=="true")
+        this.dependsOnT = options.model.dep_ut.data01.value;
+        if(options.model.dep_ut.data00.value=="true")
+        this.dependsOnU = options.model.dep_ut.data00.value;
+        this.id = options.id;
+        this.interfaceFunctionName = arguments.callee.caller.name;
+        this.ordering = options.ordering;
+        this.parent = options.parent;
+        if(options.model.sim instanceof Array)
+        {
+            this.simulationFunctionName = options.model.sim[0].data00.value;
+            var func_type;
+            switch(options.model.sim[1].data00.realPart)
+            {
+                case -2:
+                    func_type = "ESELECT";
+                    break;
+                case -1:
+                    func_type = "IFTHENELSE";
+                    break;
+                case 1:
+                    func_type = "TYPE_1";
+                    break;
+                case 2:
+                    func_type = "TYPE_2";
+                    break;
+                case 3:
+                    func_type = "TYPE_3";
+                    break;
+                case 4:
+                    func_type = "C_OR_FORTRAN";
+                    break;
+                case 5:
+                    func_type = "SCILAB";
+                    break;
+                case 99:
+                    func_type = "DEBUG";
+                    break;
+                case 1001:
+                    func_type = "DYNAMIC_FORTRAN_1";
+                    break;
+                case 2001:
+                    func_type = "DYNAMIC_C_1";
+                    break;
+                case 2004:
+                    func_type = "DYNAMIC_EXPLICIT_4";
+                    break;
+                case 10001:
+                    func_type = "OLDBLOCKS";
+                    break;
+                case 10004:
+                    func_type = "IMPLICIT_C_OR_FORTRAN";
+                    break;
+                case 30004:
+                    func_type = "MODELICA";
+                    break;
+            }
+            this.simulationFunctionType = func_type;
+        }
+        else
+        {
+            this.simulationFunctionName = options.model.sim.data00.value;
+            this.simulationFunctionType = "DEFAULT";
+        }
+        this.style = arguments.callee.caller.name;
+        this.value = options.value;
+        this.vertex = options.vertex;
+        this.visible = options.visible;
+        this.exprs = options.graphics.exprs;
+        this.realParameters = options.model.rpar;
+        this.integerParameters = options.model.ipar;
+        this.objectsParameters = options.model.opar;
+        this.nbZerosCrossing = new ScilabDouble([0]);
+        this.nmode = new ScilabDouble([0]);
+        this.oDState = list();
+        this.equations = list();
+    	this.blockName = "BasicBlock";
+        this.blockElementName = arguments.callee.caller.name;
+    }
 }
 
 

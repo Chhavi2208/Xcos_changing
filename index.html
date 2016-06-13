@@ -759,19 +759,27 @@
 						var node = enc.encode(details);
 						var ans = ANDBLK("details");
 						console.log(ans);
-						//console.log(mav());
 						//node.setAttribute('label',label);
-						var temp=enc.encode(parent);
-						node.setAttribute('parent',temp.getAttribute('id'));
+					//	var temp=enc.encode(parent);
+					//	node.setAttribute('parent',temp.getAttribute('id'));
                         v1 = graph.insertVertex(parent, null, node, x, y, 80, 80, 'ANDBLK');
                         createPorts(graph, v1, [], ['CONTROL', 'CONTROL'], [], ['COMMAND']);
                     } else if (name == 'CMSCOPE') {
-                        v1 = graph.insertVertex(parent, null, label, x, y, 80, 80, 'CMSCOPE');
+                        var details = CMSCOPE("define");
+						var enc = new mxCodec(mxUtils.createXmlDocument());
+						var node = enc.encode(details);
+						//var ans = ANDBLK("details");
+						//node.setAttribute('label',label);
+						var temp=enc.encode(parent);
+						node.setAttribute('parent',temp.getAttribute('id'));
+                        v1 = graph.insertVertex(parent, null, node, x, y, 80, 80, 'CMSCOPE');
                         createPorts(graph, v1, ['EXPLICIT', 'EXPLICIT'], ['CONTROL'], [], []);
                     } else if (name == 'CONST_m') {
                         var details = CONST_m("define");
 						var enc = new mxCodec(mxUtils.createXmlDocument());
 						var node = enc.encode(details);
+						var ans = CONST_m("details");
+						console.log(ans);
 						var temp=enc.encode(parent);
 						node.setAttribute('parent',temp.getAttribute('id'));
                         v1 = graph.insertVertex(parent, null, node, x, y, 80, 80, 'CONST_m');
@@ -1134,7 +1142,7 @@
                     var x = 0;
                     var y = (i / (leftNumber + 1)).toFixed(4);
                     var portType = leftArray[i - 1];
-                    createInputPort(graph, block, x, y, portType, 'left');
+                    createInputPort(graph, block, x, y, portType, 'left', i);
                 }
             }
             if (topNumber != 0) {
@@ -1142,7 +1150,7 @@
                     var x = (i / (topNumber + 1)).toFixed(4);
                     var y = 0;
                     var portType = topArray[i - 1];
-                    createInputPort(graph, block, x, y, portType, 'top');
+                    createInputPort(graph, block, x, y, portType, 'top', i);
                 }
             }
         };
@@ -1155,7 +1163,7 @@
                     var x = 1;
                     var y = (i / (rightNumber + 1)).toFixed(4);
                     var portType = rightArray[i - 1];
-                    createOutputPort(graph, block, x, y, portType, 'right');
+                    createOutputPort(graph, block, x, y, portType, 'right', i);
                 }
             }
             if (bottomNumber != 0) {
@@ -1163,12 +1171,12 @@
                     var x = (i / (bottomNumber + 1)).toFixed(4);
                     var y = 1;
                     var portType = bottomArray[i - 1];
-                    createOutputPort(graph, block, x, y, portType, 'bottom');
+                    createOutputPort(graph, block, x, y, portType, 'bottom', i);
                 }
             }
         };
 
-        function createInputPort(graph, block, x, y, portType, position) {
+        function createInputPort(graph, block, x, y, portType, position, order) {
             var port = null;
             if (portType == 'COMMAND') {
                 port = graph.insertVertex(block, null, 'CommandPort', x, y, 10, 10, 'CommandPort', true);
@@ -1185,10 +1193,11 @@
                 } else if (position == 'left') {
                     port.geometry.offset = new mxPoint(-10, -6);
                 }
+                port.ordering = order;
             }
         };
 
-        function createOutputPort(graph, block, x, y, portType, position) {
+        function createOutputPort(graph, block, x, y, portType, position, order) {
             var port = null;
             if (portType == 'COMMAND') {
                 port = graph.insertVertex(block, null, 'CommandPort', x, y, 10, 10, 'CommandPort', true);
@@ -1206,6 +1215,7 @@
                 if (position == 'right') {
                     port.geometry.offset = new mxPoint(0, -6);
                 }
+                port.ordering = order;
             }
         };
 
