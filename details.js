@@ -2,7 +2,7 @@
 // Only during printing, their nomenclature will change
 // Good read: http://javascript.info/tutorial/arguments#keyword-arguments
 /*
-Authors: Adhitya, Nimish, Chhavi
+Authors: Adhitya, Nimish, Chhavi, Saarang
 */
 var count = 1;
 
@@ -72,19 +72,6 @@ function standard_define() {
     };
     return new scicos_block(block_options);
 }
-
-// Returns ScilabDouble which contains a list with size = n and all values = 0
-function zeros(n) {
-    var arg = new Array(n + 1).join("0").split("").map(parseFloat);
-    var port = new ScilabDouble();
-    var i = 0;
-
-    for (i = 0; i < arg[0].length; i++)
-        port.list.push(arg[0][i]);
-
-    return port;
-}
-
 
 function scicos_graphics() {
     var options = arguments[0] || new Object();
@@ -296,6 +283,22 @@ function data() {
     this.column;
     this.realPart;
     this.value;
+}
+
+function getData() {
+    var dataObject = arguments[0];
+    var key;
+    var dataArray = [];
+    for (key in dataObject) {
+        if (key != "height" && key != "width") {
+            if (typeof dataObject[key].value === "undefined") {
+                dataArray.push(dataObject[key].realPart);
+            } else {
+                dataArray.push(dataObject[key].value);
+            }
+        }
+    }
+    return dataArray;
 }
 
 function CONST_m() {
@@ -533,11 +536,12 @@ function CFSCOPE() {
             this.x = new standard_define(new ScilabDouble([80, 80]), model, exprs, gr_i); // 2 -> 80
             this.x.graphics.style = new ScilabString(["CFSCOPE"]);
             return new BasicBlock(this.x);
+        case "details":
+            return this.x;
     }
 }
 
 function CMSCOPE() {
-
     switch (arguments[0]) {
         case "define":
             this.win = -1;
@@ -596,83 +600,89 @@ function CMSCOPE() {
             this.x = new standard_define(new ScilabDouble([80, 80]), model, exprs, gr_i); // 2 -> 80
             this.x.graphics.style = new ScilabString(["CMSCOPE"]);
             return new BasicBlock(this.x);
+        case "details":
+            return this.x;
     }
 }
 
 function CLOCK_c() {
-    var evtdly = EVTDLY_c("define");
-    evtdly.graphics.orig = new ScilabDouble([320, 232]);
-    evtdly.graphics.sz = new ScilabDouble([40, 40]);
-    evtdly.graphics.flip = new ScilabBoolean([true]);
-    evtdly.graphics.exprs = new ScilabString(["0.1"], ["0.1"]);
-    evtdly.graphics.pein = new ScilabDouble([6]);
-    evtdly.graphics.peout = new ScilabDouble([3]);
-    evtdly.model.rpar = new ScilabDouble([0.1], [0.1]);
-    evtdly.model.firing = new ScilabDouble([0.1]);
-    //changed
-    evtdly.model.uid = new ScilabString([count]);
-    evtdly.doc = list(new ScilabString([count++]));
-    evtdly.model.evtin = new ScilabDouble([-1]);
-    evtdly.model.evtout = new ScilabDouble([-1]);
-    evtdly.graphics.peout = new ScilabDouble([4]);
+    switch (arguments[0]) {
+        case "define":
+            var evtdly = EVTDLY_c("define");
+            evtdly.graphics.orig = new ScilabDouble([320, 232]);
+            evtdly.graphics.sz = new ScilabDouble([40, 40]);
+            evtdly.graphics.flip = new ScilabBoolean([true]);
+            evtdly.graphics.exprs = new ScilabString(["0.1"], ["0.1"]);
+            evtdly.graphics.pein = new ScilabDouble([6]);
+            evtdly.graphics.peout = new ScilabDouble([3]);
+            evtdly.model.rpar = new ScilabDouble([0.1], [0.1]);
+            evtdly.model.firing = new ScilabDouble([0.1]);
 
-    var output_port = CLKOUT_f("define");
-    output_port.graphics.orig = new ScilabDouble([399, 162]);
-    output_port.graphics.sz = new ScilabDouble([20, 20]);
-    output_port.graphics.flip = new ScilabBoolean([true]);
-    output_port.graphics.exprs = new ScilabString(["1"]);
-    output_port.graphics.pein = new ScilabDouble([5]);
-    output_port.model.ipar = new ScilabDouble([1]);
-    //changed
-    output_port.model.uid = new ScilabString([count]);
-    output_port.doc = list(new ScilabString([count++]));
+            evtdly.model.uid = new ScilabString([count]); // changed
+            evtdly.doc = list(new ScilabString([count++]));
+            evtdly.model.evtin = new ScilabDouble([-1]);
+            evtdly.model.evtout = new ScilabDouble([-1]);
+            evtdly.graphics.peout = new ScilabDouble([4]);
 
-    var split = CLKSPLIT_f("define");
-    split.graphics.orig = new ScilabDouble([380.71066, 172]);
-    split.graphics.pein = new ScilabDouble([3]);
-    split.graphics.peout = new ScilabDouble([5], [6]);
-    split.model.uid = new ScilabString([count]);
-    split.doc = list(new ScilabString([count++]));
-    //changed
-    split.graphics.pein = new ScilabDouble([4]);
+            var output_port = CLKOUT_f("define");
+            output_port.graphics.orig = new ScilabDouble([399, 162]);
+            output_port.graphics.sz = new ScilabDouble([20, 20]);
+            output_port.graphics.flip = new ScilabBoolean([true]);
+            output_port.graphics.exprs = new ScilabString(["1"]);
+            output_port.graphics.pein = new ScilabDouble([5]);
+            output_port.model.ipar = new ScilabDouble([1]);
 
-    var diagram = scicos_diagram();
-    diagram.objs.push(output_port);
-    diagram.objs.push(evtdly);
-    diagram.objs.push(split);
-    diagram.objs.push(scicos_link({
-        xx: new ScilabDouble([340], [340], [380.71]),
-        yy: new ScilabDouble([226.29], [172], [172]),
-        ct: new ScilabDouble([5, -1]),
-        from: new ScilabDouble([2, 1, 0]),
-        to: new ScilabDouble([3, 1, 1])
-    }));
-    diagram.objs.push(scicos_link({
-        xx: new ScilabDouble([380.71], [399]),
-        yy: new ScilabDouble([172], [172]),
-        ct: new ScilabDouble([5, -1]),
-        from: new ScilabDouble([3, 1, 0]),
-        to: new ScilabDouble([1, 1, 1])
-    }));
-    diagram.objs.push(scicos_link({
-        xx: new ScilabDouble([380.71], [380.71], [340], [340]),
-        yy: new ScilabDouble([172], [302], [302], [277.71]),
-        ct: new ScilabDouble([5, -1]),
-        from: new ScilabDouble([3, 2, 0]),
-        to: new ScilabDouble([2, 1, 1])
-    }));
-    var x = scicos_block();
-    this.x.gui = new ScilabString(["CLOCK_c"]);
-    this.x.graphics.sz = new ScilabDouble([2, 2]);
-    this.x.graphics.gr_i = new ScilabString([]);
-    this.x.graphics.peout = new ScilabDouble([0]);
-    this.x.model.sim = new ScilabString(["csuper"]);
-    this.x.model.evtout = new ScilabDouble([1]);
-    this.x.model.blocktype = new ScilabString(["h"]);
-    this.x.model.firing = new ScilabBoolean([false]);
-    this.x.model.dep_ut = new ScilabBoolean([false, false]);
-    this.x.model.rpar = diagram;
-    return new BasicBlock(this.x);
+            output_port.model.uid = new ScilabString([count]); // changed
+            output_port.doc = list(new ScilabString([count++]));
+
+            var split = CLKSPLIT_f("define");
+            split.graphics.orig = new ScilabDouble([380.71066, 172]);
+            split.graphics.pein = new ScilabDouble([3]);
+            split.graphics.peout = new ScilabDouble([5], [6]);
+            split.model.uid = new ScilabString([count]);
+            split.doc = list(new ScilabString([count++]));
+            split.graphics.pein = new ScilabDouble([4]); // changed
+
+            var diagram = scicos_diagram();
+            diagram.objs.push(output_port);
+            diagram.objs.push(evtdly);
+            diagram.objs.push(split);
+            diagram.objs.push(scicos_link({
+                xx: new ScilabDouble([340], [340], [380.71]),
+                yy: new ScilabDouble([226.29], [172], [172]),
+                ct: new ScilabDouble([5, -1]),
+                from: new ScilabDouble([2, 1, 0]),
+                to: new ScilabDouble([3, 1, 1])
+            }));
+            diagram.objs.push(scicos_link({
+                xx: new ScilabDouble([380.71], [399]),
+                yy: new ScilabDouble([172], [172]),
+                ct: new ScilabDouble([5, -1]),
+                from: new ScilabDouble([3, 1, 0]),
+                to: new ScilabDouble([1, 1, 1])
+            }));
+            diagram.objs.push(scicos_link({
+                xx: new ScilabDouble([380.71], [380.71], [340], [340]),
+                yy: new ScilabDouble([172], [302], [302], [277.71]),
+                ct: new ScilabDouble([5, -1]),
+                from: new ScilabDouble([3, 2, 0]),
+                to: new ScilabDouble([2, 1, 1])
+            }));
+            this.x = scicos_block();
+            this.x.gui = new ScilabString(["CLOCK_c"]);
+            this.x.graphics.sz = new ScilabDouble([2, 2]);
+            this.x.graphics.gr_i = new ScilabString([]);
+            this.x.graphics.peout = new ScilabDouble([0]);
+            this.x.model.sim = new ScilabString(["csuper"]);
+            this.x.model.evtout = new ScilabDouble([1]);
+            this.x.model.blocktype = new ScilabString(["h"]);
+            this.x.model.firing = new ScilabBoolean([false]);
+            this.x.model.dep_ut = new ScilabBoolean([false, false]);
+            this.x.model.rpar = diagram;
+            return new BasicBlock(this.x);
+        case "details":
+            return this.x;
+    }
 }
 
 function EVTDLY_c() {
@@ -771,7 +781,6 @@ function IFTHEL_f() {
     var gr_i = new ScilabString(["xstringb(orig(1),orig(2),\"IFTHEL_f\",sz(1),sz(2));"]);
     var exprs = new ScilabString(["1"], ["1"]); // value model.in, model.nmode inverse
 
-
     var block = new standard_define(new ScilabDouble([80, 80]), model, exprs, gr_i); // 3 -> 80
     block.graphics.in_implicit = new ScilabString(["E"]);
     // changed
@@ -784,7 +793,6 @@ function IFTHEL_f() {
 
 function BasicBlock() {
     if (arguments.length > 0) {
-
         var options = arguments[0];
         this.angle = options.angle; // Not Known
         this.blockType = getData(options.model.blocktype)[0];
@@ -847,7 +855,7 @@ function BasicBlock() {
             }
             this.simulationFunctionType = func_type;
         } else {
-            this.simulationFunctionName = getData(options.model.sim[0])[0];
+            this.simulationFunctionName = getData(options.model.sim)[0];
             this.simulationFunctionType = "DEFAULT";
         }
         this.style = arguments.callee.caller.name;
@@ -909,20 +917,15 @@ function colon_operator() {
     return new_arr;
 }
 
-function getData() {
-    var dataObject = arguments[0];
-    var key;
-    var dataArray = [];
-    for( key in dataObject ) {
-        if(key != "height" && key != "width")
-        {
-            if( typeof dataObject[key].value === "undefined" ) {
-                dataArray.push(dataObject[key].realPart);
-            }
-            else {
-                dataArray.push(dataObject[key].value);
-            }
-        }
-    }
-    return dataArray;
+// Returns ScilabDouble which contains a list with size = n and all values = 0
+function zeros(n) {
+    var arg = new Array(n + 1).join("0").split("").map(parseFloat);
+    var port = new ScilabDouble();
+    var i = 0;
+
+    for (i = 0; i < arg[0].length; i++)
+        port.list.push(arg[0][i]);
+
+    return port;
 }
+
