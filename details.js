@@ -767,9 +767,9 @@ function BasicBlock() {
         this.blockType = options.model.blocktype.data00.value;
         this.connectable = options.connectable;
         if(options.model.dep_ut.data00.value=="true")
-        this.dependsOnU = options.model.dep_ut.data00.value;
+        this.dependsOnU = "1";
         if(options.model.dep_ut.data01.value=="true")
-        this.dependsOnT = options.model.dep_ut.data01.value;
+        this.dependsOnT = "1";
         this.id = options.id;
         this.interfaceFunctionName = arguments.callee.caller.name;
         this.ordering = options.ordering;
