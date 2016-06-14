@@ -483,18 +483,6 @@ function ANDBLK() {
             this.x.model.firing = new ScilabBoolean([false]);
             this.x.model.dep_ut = new ScilabBoolean([false, false]);
             this.x.model.rpar = diagram;
-            var attributes = {
-                style: "ANDBLK",
-                simulationFunctionName: "csuper",
-                simulationFunctionType: "DEFAULT",
-                blockType: "h",
-                interfaceFunctionName: "ANDBLK",
-        		blockName: "ANDBLK",
-        		blockElementName: "ANDBLK",
-        		realParameters : this.x.model.rpar,
-        		integerParameters : this.x.model.ipar,
-        		exprs : this.x.graphics.exprs
-            };
             return new BasicBlock(this.x);
         
         case "details":
@@ -536,18 +524,53 @@ function CFSCOPE() {
             var gr_i = list(new ScilabString(["xstringb(orig(1),orig(2),\"CFSCOPE\",sz(1),sz(2));"]),new ScilabDouble([8]));
             this.x = new standard_define(new ScilabDouble([80, 80]), model, exprs, gr_i); // 2 -> 80
             this.x.graphics.style = new ScilabString(["CFSCOPE"]);
-            var attributes = {
-                style: "CFSCOPE",
-                simulationFunctionName: "cfscope",
-                simulationFunctionType: "C_OR_FORTRAN",
-                dependsOnU: "1",
-                interfaceFunctionName: "CFSCOPE",
-        		blockName: "CFSCOPE",
-        		blockElementName: "CFSCOPE",
-        		realParameters : this.x.model.rpar,
-        		integerParameters : this.x.model.ipar,
-        		exprs : this.x.graphics.exprs
-            };
+            return new BasicBlock(this.x);
+    }
+}
+
+function CMSCOPE()
+{
+
+    switch(arguments[0])
+    {
+        case "define":
+            this.win=-1;
+            this.in1=[[1],[1]];
+            this.wdim=[[-1],[-1]];
+            this.wpos=[[-1],[-1]];
+            this.clrs=[[1],[3],[5],[7],[9],[11],[13],[15]];
+            this.N=20;
+            this.ymin=[[-1],[-5]];
+            this.ymax=[[1],[5]];
+            this.per=[[30],[30]];
+            this.yy=[...transpose(ymin),...transpose(ymax)];
+            this.period=transpose(per);
+
+          
+            var model=scicos_model();
+            model.sim=list(new ScilabString(["cmscope"]),new ScilabDouble([4]));
+            model.in =new ScilabDouble(...this.in1);
+            model.in2=new ScilabDouble([1],[1]);
+            model.intyp=new ScilabDouble([1],[1]);
+            model.evtin=new ScilabDouble([1]);
+            model.rpar=new ScilabDouble([0],...colon_operator(this.period),...colon_operator(this.yy));
+            model.ipar = new ScilabDouble([win],[this.in1.length],[N],...this.wpos,...this.wdim,...this.in1,this.clrs[0],this.clrs[1]);  
+            
+            model.blocktype=new ScilabString(["c"]);
+            model.dep_ut=new ScilabBoolean([true,false]);
+            var  exprs=new ScilabString([this.in1.toString().replace(/,/g," ")],[this.clrs.toString().replace(/,/g, " ")],
+            [this.win],
+            [sci2exp([])],
+            [sci2exp([])],
+            [this.ymin.toString().replace(/,/g," ")],
+            [this.ymax.toString().replace(/,/g," ")],
+            [this.per.toString().replace(/,/g," ")],
+            [this.N],
+            [0],
+            [""]);
+            var gr_i = list(new ScilabString(["xstringb(orig(1),orig(2),\"CMSCOPE\",sz(1),sz(2));"]),new ScilabDouble([8]));
+            this.x = new standard_define(new ScilabDouble([80, 80]), model, exprs, gr_i); // 2 -> 80
+            this.x.graphics.style = new ScilabString(["CMSCOPE"]);
             return new BasicBlock(this.x);
     }
 }
@@ -625,19 +648,6 @@ function CLOCK_c() {
     this.x.model.firing=new ScilabBoolean([false]);
     this.x.model.dep_ut=new ScilabBoolean([false, false]);
     this.x.model.rpar=diagram;
-
-    var attributes = {
-        style: "CLOCK_c",
-        simulationFunctionName: "csuper",
-        simulationFunctionType: "DEFAULT",
-        blockType: "h",
-        interfaceFunctionName: "CLOCK_c",
-		blockName: "CLOCK_c",
-		blockElementName: "CLOCK_c",
-		realParameters : this.x.model.rpar,
-		integerParameters : this.x.model.ipar,
-		exprs : this.x.graphics.exprs
-    };
     return new BasicBlock(this.x);
 }
 
@@ -751,14 +761,15 @@ function IFTHEL_f() {
 function BasicBlock() {
     if(arguments.length > 0)
     {
+        
         var options = arguments[0];
         this.angle = options.angle;
         this.blockType = options.model.blocktype.data00.value;
         this.connectable = options.connectable;
-        if(options.model.dep_ut.data01.value=="true")
-        this.dependsOnT = options.model.dep_ut.data01.value;
         if(options.model.dep_ut.data00.value=="true")
         this.dependsOnU = options.model.dep_ut.data00.value;
+        if(options.model.dep_ut.data01.value=="true")
+        this.dependsOnT = options.model.dep_ut.data01.value;
         this.id = options.id;
         this.interfaceFunctionName = arguments.callee.caller.name;
         this.ordering = options.ordering;
@@ -857,4 +868,22 @@ function sci2exp(c) {
         result += "]";
         return result;
     }
+}
+
+function transpose(a)
+{
+return a[0].map(function (_, c) { return a.map(function (r) { return r[c]; }); });
+}
+
+function colon_operator()
+{
+    var array = arguments[0];
+    var new_arr = [];
+    var i , j;
+    for(i = 0; i < array[0].length ; i++) {
+        for(j = 0; j < array.length ; j++) {
+            new_arr.push([array[j][i]]);
+        }
+    }
+    return new_arr;
 }
